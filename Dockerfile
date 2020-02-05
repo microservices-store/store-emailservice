@@ -1,5 +1,7 @@
 FROM python:3-slim as base
 
+FROM base as builder
+
 RUN apt-get -qq update \
     && apt-get install -y --no-install-recommends \
         g++ \
@@ -9,6 +11,8 @@ RUN apt-get -qq update \
 COPY requirements.txt .
 RUN pip install -r requirements.txt
 
+FROM base as final
+# Enable unbuffered logging
 ENV PYTHONUNBUFFERED=1
 
 RUN apt-get -qq update \
@@ -21,6 +25,9 @@ RUN GRPC_HEALTH_PROBE_VERSION=v0.2.0 && \
     chmod +x /bin/grpc_health_probe
 
 WORKDIR /email_server
+
+# Grab packages from builder
+COPY --from=builder /usr/local/lib/python3.8/ /usr/local/lib/python3.8/
 
 # Add the application
 COPY . .
