@@ -1,8 +1,16 @@
 steps:
+  # Get Env Vars from dhvars.toml and create cloudbuild.sh
+  - name: 'quay.io/deployhub/compupdate'
+    args: ['envscript', '--envvars', 'cloudbuild.toml']
+  # Use commit count in IMAGE_TAG
+  - name: gcr.io/cloud-builders/docker
+    entrypoint: 'bash'
+    args: ['-c', '. /workspace/cloudbuild.sh;git clone $$COMPONENT_GITURL /tmp/git;cd /tmp/git;echo export IMAGE_TAG=\"$BRANCH_NAME-v$$COMPONENT_VERSION.$(git rev-list --count $BRANCH_NAME)-g$SHORT_SHA\" >> /workspace/cloudbuild.sh;cat /workspace/cloudbuild.sh']
+
   # Build the image and save details as part of the LABEL
   - name: 'gcr.io/cloud-builders/docker'
     entrypoint: 'bash'
-    args: ["-c", "BLDDATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ') && echo $$BLDDATE > /workspace/blddate.txt && docker build --tag quay.io/hipsterstore/emailservice:master-v0.1.1-4-g$SHORT_SHA --build-arg BLDDATE=$$BLDDATE --build-arg REPO_NAME=$REPO_NAME --build-arg COMMIT_SHA=$COMMIT_SHA --build-arg SHORT_SHA=$SHORT_SHA --build-arg PROJECT_ID=$PROJECT_ID --build-arg BUILD_ID=$BUILD_ID --build-arg BRANCH_NAME=$BRANCH_NAME --build-arg TAG_NAME=$TAG_NAME --build-arg REVISION_ID=$REVISION_ID ."]
+    args: ["-c", '. /workspace/cloudbuild.sh;docker build --tag "$$COMPONENT_DOCKERREPO:$$IMAGE_TAG" --build-arg "BLDDATE=$$BLDDATE" --build-arg "REPO_NAME=$REPO_NAME" --build-arg "COMMIT_SHA=$COMMIT_SHA" --build-arg "SHORT_SHA=$SHORT_SHA" --build-arg "PROJECT_ID=$PROJECT_ID" --build-arg "BUILD_ID=$BUILD_ID" --build-arg "BRANCH_NAME=$BRANCH_NAME" --build-arg "TAG_NAME=$TAG_NAME" --build-arg "REVISION_ID=$REVISION_ID" .']
     
   # Login to Quay for push.
   # PASSWORD is decrypted before this step runs.
@@ -11,41 +19,29 @@ steps:
     entrypoint: 'bash'
     env:
       - 'DOCKER_CONFIG=/workspace/docker-config'
-    args: ['-c', 'docker login quay.io --username "$$QUAY_USERID" --password $$QUAY_PASSWORD']
+    args: ['-c', '. /workspace/cloudbuild.sh;docker login quay.io --username "$$QUAY_USERID" --password $$QUAY_PASSWORD']
     secretEnv: ['QUAY_USERID', 'QUAY_PASSWORD']
   
   # Push the image to Quay.
   - name: 'gcr.io/cloud-builders/docker'
+    entrypoint: 'bash'
     env:
       - 'DOCKER_CONFIG=/workspace/docker-config'
-    args: ["push", "quay.io/hipsterstore/emailservice:master-v0.1.1-4-g$SHORT_SHA"]
+    args: ['-c', ". /workspace/cloudbuild.sh;docker push $$COMPONENT_DOCKERREPO:$$IMAGE_TAG"]
 
   # Get image id
   - name: 'gcr.io/cloud-builders/docker'
     entrypoint: 'bash'
     env:
       - 'DOCKER_CONFIG=/workspace/docker-config'
-    args: ['-c', "docker images quay.io/hipsterstore/emailservice:master-v0.1.1-4-g$SHORT_SHA -q > /workspace/imageid.txt" ]
+    args: ['-c', ". /workspace/cloudbuild.sh;echo export DIGEST=$(docker inspect --format='{{index .RepoDigests 0}}' $$COMPONENT_DOCKERREPO:$$IMAGE_TAG) >> cloudbuild.sh" ]
 
   # Capture new component version in DeployHub
   - name: 'quay.io/deployhub/compupdate'
+    entrypoint: 'bash'
     secretEnv: ['DHUSER', 'DHPASS']
-    args: ["updatecomp", 
-      "--dhurl", "https://console.deployhub.com", 
-      "--appname", "GLOBAL.Chasing Horses LLC.Vintage LLC.Hipster Store.Webstore;July 4th Sale", 
-      "--appversion", "1.2.9.1", 
-      "--compname", "GLOBAL.Chasing Horses LLC.Vintage LLC.Hipster Store.emailservice", 
-      "--compversion", "v0.1.1-4-g$SHORT_SHA", 
-      "--docker", 
-      "--compattr", "GitCommit:$SHORT_SHA", 
-      "--compattr", "GitUrl:https://github.com/ortelius/store-emailservice", 
-      "--compattr", "GitRepo:ortelius/store-emailservice", 
-      "--compattr", "Chart:emailservice",
-      "--compattr", "DockerSha:@/workspace/imageid.txt",
-      "--compattr", "DockerBuildDate:@/workspace/blddate.txt",
-      "--compattr", "DockerRepo:quay.io/hipsterstore/emailservice",
-      "--compattr", "BuildId:$BUILD_ID"]
-
+    args: ['-c', '. /workspace/cloudbuild.sh;dh updatecomp --dhurl https://console.deployhub.com --appname "@APPLIST" --compname "$$COMPONENT_NAME" --compversion $$IMAGE_TAG --docker --compattr "GitCommit:$SHORT_SHA" --compattr "GitUrl:$$COMPONENT_GITURL" --compattr "GitRepo:$REPO_NAME" --compattr "GitTag:$TAG_NAME" --compattr "GitBranch:$BRANCH_NAME" --compattr "Chart:$$COMPONENT_CHARTNAME" --compattr "DockerSha:$$DIGEST" --compattr "DockerBuildDate:$$BLDDATE" --compattr "DockerRepo:$$COMPONENT_DOCKERREPO" --compattr "BuildId:$BUILD_ID" --compattr "BuildUrl:https://console.cloud.google.com/cloud-build/builds/$BUILD_ID?project=$PROJECT_ID" --compattr "CustomAction:$$COMPONENT_HELMCHART" --compattr "DockerTag:$$IMAGE_TAG"']
+ 
 secrets:
 - kmsKeyName: projects/eighth-physics-169321/locations/global/keyRings/cli/cryptoKeys/quay
   secretEnv:

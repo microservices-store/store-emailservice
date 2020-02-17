@@ -1,0 +1,10 @@
+[Component]
+    Name = "GLOBAL.Chasing Horses LLC.Vintage LLC.Hipster Store.emailservice"
+    Version = "1.2.2"
+    ChartName = "chart/emailservice"
+    DockerRepo = "quay.io/hipsterstore/emailservice"
+    GitUrl = "https://github.com/ortelius/store-emailservice"
+    HelmChart = "GLOBAL.HelmChart"
+    Applications = [
+        "GLOBAL.Chasing Horses LLC.Vintage LLC.Hipster Store.Webstore;July 4th Sale;1.2.9.1"
+    ]
