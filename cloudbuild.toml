@@ -7,4 +7,4 @@
     ChartName = "chart/emailservice"
     DockerRepo = "quay.io/hipsterstore/emailservice"
     GitUrl = "https://github.com/ortelius/store-emailservice"
-    HelmChart = "GLOBAL.HelmChart"
+    CustomAction = "GLOBAL.HelmChart"
