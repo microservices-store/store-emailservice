@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name:  {{ include "emailservice.name" . }}
+spec:
+  selector:
+    matchLabels:
+      app:  {{ include "emailservice.name" . }}
+  template:
+    metadata:
+      labels:
+        app:  {{ include "emailservice.name" . }}
+    spec:
+      terminationGracePeriodSeconds: 5
+      containers:
+        - name: {{ include "emailservice.name" . }}
+          image: "{{ .Values.DockerRepo }}:{{ .Values.DockerTag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }} 
+          ports:
+            - containerPort: 8080
+          env:
+          - name: PORT
+            value: "8080"
+          readinessProbe:
+            periodSeconds: 5
+            exec:
+              command: ["/bin/grpc_health_probe", "-addr=:8080"]
+          livenessProbe:
+            periodSeconds: 5
+            exec:
+              command: ["/bin/grpc_health_probe", "-addr=:8080"]
+          env:
+          - name: ENABLE_PROFILER
+            value: "0"
+          resources:
+            requests:
+              cpu: 100m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
