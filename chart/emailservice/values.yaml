@@ -4,11 +4,6 @@
 
 replicaCount: 3
 
-image:
-  repository: quay.io/hipsterstore/cartservice
-  tag: latest
-  pullPolicy: Always
-
 nameOverride: ""
 fullnameOverride: ""
 
