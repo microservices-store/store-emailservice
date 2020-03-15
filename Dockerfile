@@ -1,4 +1,4 @@
-FROM python:3-slim as base
+FROM python:3.7-slim as base
 
 FROM base as builder
 
@@ -27,7 +27,7 @@ RUN GRPC_HEALTH_PROBE_VERSION=v0.2.0 && \
 WORKDIR /email_server
 
 # Grab packages from builder
-COPY --from=builder /usr/local/lib/python3.8/ /usr/local/lib/python3.8/
+COPY --from=builder /usr/local/lib/python3.7/ /usr/local/lib/python3.7/
 
 # Add the application
 COPY . .
