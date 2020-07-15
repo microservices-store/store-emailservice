@@ -1,0 +1,62 @@
+
+version: 2.1
+
+orbs:
+  docker: circleci/docker@0.5.20
+  deployhub-orb: deployhub/deployhub-orb@1.73.0
+
+jobs:
+  build-push-dh-update:
+    executor: docker/docker
+    steps:
+      - setup_remote_docker 
+      - checkout
+      - docker/check
+      - deployhub-orb/envscript:
+          envvars: cloudbuild.toml
+          envvars_sh: $BASH_ENV
+      - run:
+          command: |
+            echo export IMAGE_TAG=\"$CIRCLE_BRANCH-v$COMPONENT_VERSION.$(git rev-list --count $CIRCLE_BRANCH)-g$(echo $CIRCLE_SHA1 | cut -b 1-7)\" >> $BASH_ENV  
+      - run:
+          name: Login to Quay
+          command: docker login -u=$QUAY_USERNAME -p=$QUAY_PASSWORD quay.io
+      - docker/build:
+          image: hipsterstore/emailservice
+          registry: quay.io
+          tag: $IMAGE_TAG
+      - docker/push:
+          image: hipsterstore/emailservice
+          registry: quay.io
+          digest-path: /tmp/digest.txt
+          tag: $IMAGE_TAG
+      - run:
+          command: |
+            env | sort && echo "Digest is: $(</tmp/digest.txt)"
+      - deployhub-orb/microservice_version_update:
+              application: $COMPONENT_APPLICATION
+              compname: $COMPONENT_NAME
+              compversion: $IMAGE_TAG
+              comptype: --docker
+              helmchart: $COMPONENT_CHARTNAME
+              dockersha: $(</tmp/digest.txt)
+              dockerrepo: $COMPONENT_DOCKERREPO
+              dockertag: $IMAGE_TAG
+              builddate:  $(date)
+              gitrepo: $CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME
+              giturl: $CIRCLE_REPOSITORY_URL
+              gitcommit: $CIRCLE_SHA1
+              gitbranch: $CIRCLE_BRANCH
+              gittag: "$CIRCLE_TAG"
+              buildid: $CIRCLE_BUILD_NUM
+              buildurl: $CIRCLE_BUILD_URL
+              buildnumber: $CIRCLE_BUILD_NUM
+              customaction: $COMPONENT_CUSTOMACTION
+              preaction: ""
+              postaction: ""
+  
+workflows:
+  on-commit:
+    jobs:
+      - build-push-dh-update
+      
