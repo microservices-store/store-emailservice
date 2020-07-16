@@ -58,5 +58,6 @@ jobs:
 workflows:
   on-commit:
     jobs:
-      - build-push-dh-update
+      - build-push-dh-update:
+          context: sharedvars
       
