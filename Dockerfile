@@ -4,7 +4,7 @@ FROM base as builder
 
 RUN apt-get -qq update \
     && apt-get install -y --no-install-recommends \
-        g++ \
+        g++ gcc \
     && rm -rf /var/lib/apt/lists/*
 
 # get packages
