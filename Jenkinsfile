@@ -43,6 +43,7 @@ node {
 
 		// Run Docker Build
 		sh (returnStdout: true, script: "docker build -f Dockerfile --tag ${IMAGE_REGISTRY}:${IMAGE_TAG} . 2>&1")
+		sh (returnStdout: true, script: "docker push ${IMAGE_REGISTRY}:${IMAGE_TAG} 2>&1")
 
 		// Run Docker Push
 
