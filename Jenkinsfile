@@ -9,50 +9,51 @@ node {
     stage ('Testing') {
 
 		// Update for your environment
-		def DHURL="https://console.deployhub.com"
-		def DHUSER="stella99"
-		def DHPASS="123456"
+		def DHUrl="https://console.deployhub.com"
+		def DHUsername="stella99"
+		def DHPassword="123456"
 
-		def COMPONENT_NAME="GLOBAL.Santa Fe Software.Online Store Company.Store Services.Email Service.emailservice"
-		def COMPONENT_VERSION="1.2.0"
-		def COMPONENT_SERVICE_OWNER="Abraham Ortelius"
-		def COMPONENT_SERVICE_OWNER_EMAIL="request-info@ortelius.io"
-		def COMPONENT_SERVICE_OWNER_PHONE="505-559-4455"
-		def COMPONENT_CUSTOMACTION="GLOBAL.HelmChart"
-		def IMAGE_REGISTRY="quay.io/hipsterstore/emailservice"
-		def IMAGE_TAG="latest"
-		def HELM_CHART="chart/emailservice"
-		def HELM_VERSION="1.0"
-		def HELM_REPO=""
-		def HELM_REPO_URL=""
-		def HELM_NAMESPACE=""
+		def CompName="GLOBAL.Santa Fe Software.Online Store Company.Store Services.Email Service.emailservice"
+		def CompVersion="1.2.0"
+		def ServiceOwner="Abraham Ortelius"
+		def ServiceOwnerEmail="request-info@ortelius.io"
+		def ServiceOwnerPhone="505-559-4455"
+		def CustomAction="GLOBAL.HelmChart"
+		def ImageRegistry="quay.io/hipsterstore/emailservice"
+		def ImageTag="latest"
+		def HelmChart="chart/emailservice"
+		def HelmChartVersion="1.0"
+		def HelmRepo=""
+		def HelmRepoUrl=""
+		def HelmNamespace=""
 
-		def APPLICATION_NAME="GLOBAL.Santa Fe Software.Online Store Company.Candy Store"
-		def APPLICATION_VERSION="v1.0.0"
+		def AppName="GLOBAL.Santa Fe Software.Online Store Company.Candy Store"
+		def AppVersion="v1.0.0"
 
 		// Derived values
-        def GIT_BRANCH=eval2var('git ls-remote --heads origin | grep $(git rev-parse HEAD) | cut -d / -f 3').trim()
-		def GIT_URL=eval2var('git config --get remote.origin.url').trim()       // remote url
-		def GIT_REPO=eval2var('git config --local remote.origin.url | sed "s/[:\\/]/\\n/g" | tail -2 | tr "\\n" "/" | sed "s/\\.git\\///"').trim()
-		def GIT_COMMIT=eval2var('git log -1 --oneline | cut -f1 -d" "').trim()  // get latest commit on the branch
-		def BLDDATE=eval2var('date').trim()
-		def COMPONENT_VARIANT="${GIT_BRANCH}"
-		def COMPONENT_VERSION_COMMIT="v${COMPONENT_VERSION}.${env.BUILD_NUMBER}-g${GIT_COMMIT}"
+        def GitBranch=eval2var('git ls-remote --heads origin | grep $(git rev-parse HEAD) | cut -d / -f 3').trim()
+		def GitUrl=eval2var('git config --get remote.origin.url').trim()       // remote url
+		def GitRepo=eval2var('git config --local remote.origin.url | sed "s/[:\\/]/\\n/g" | tail -2 | tr "\\n" "/" | sed "s/\\.git\\///"').trim()
+		def GitCommit=eval2var('git log -1 --oneline | cut -f1 -d" "').trim()  // get latest commit on the branch
+		def BuildDate=eval2var('date').trim()
+		def CompVariant="${GitBranch}"
+		def CompVersionCommmit="v${CompVersion}.${env.BUILD_NUMBER}-g${GitCommit}"
+		def CompReadme=eval2var("ls README* 1>/dev/null 2> /dev/null && echo ${GitUrl}#readme")
 
 		// Override default tag name
-   		IMAGE_TAG="${GIT_BRANCH}-v${COMPONENT_VERSION}.${env.BUILD_NUMBER}-g${GIT_COMMIT}"
+   		ImageTag="${GitBranch}-v${CompVersion}.${env.BUILD_NUMBER}-g${GitCommit}"
 
 		// Run Docker Build
-		sh (returnStdout: true, script: "docker build -f Dockerfile --tag ${IMAGE_REGISTRY}:${IMAGE_TAG} . 2>&1")
-		sh (returnStdout: true, script: "docker push ${IMAGE_REGISTRY}:${IMAGE_TAG} 2>&1")
+		sh (returnStdout: true, script: "docker build -f Dockerfile --tag ${ImageRegistry}:${ImageTag} . 2>&1")
+		sh (returnStdout: true, script: "docker push ${ImageRegistry}:${ImageTag} 2>&1")
 
 		// Run Docker Push
 
 		// Derive Disgest (must be done after push)
-		def DIGEST=eval2var("docker inspect --format='{{index .RepoDigests 0}}' ${IMAGE_REGISTRY}:${IMAGE_TAG} | tr -d '\\n'").tokenize(':')[1]
+		def ImageDigest=eval2var("docker inspect --format='{{index .RepoDigests 0}}' ${ImageRegistry}:${ImageTag} | tr -d '\\n'").tokenize(':')[1]
 
 		// Create component version and new application version in DeployHub
-		sh "/usr/local/bin/dh updatecomp --dhurl '${DHURL}' --dhuser '${DHUSER}' --dhpass '${DHPASS}' --appname '${APPLICATION_NAME}' --appversion '${APPLICATION_VERSION}' --appautoinc 'Y' --compname '${COMPONENT_NAME}' --compvariant '${COMPONENT_VARIANT}' --compversion '${COMPONENT_VERSION_COMMIT}' --compattr 'GitCommit:${GIT_COMMIT}'  --compattr 'GitUrl:${GIT_URL}' --compattr 'GitRepo:${GIT_REPO}' --compattr 'GitBranch:${GIT_BRANCH}' --compattr 'BuildId:${env.BUILD_NUMBER}' --compattr 'BuildUrl:${env.BUILD_URL}' --compattr 'Chart:${HELM_CHART}' --compattr 'ChartVersion:${HELM_VERSION}' --compattr 'ChartNamespace:${HELM_NAMESPACE}' --compattr 'ChartRepo:${HELM_REPO}' --compattr 'ChartRepoUrl:${HELM_REPO_URL}' --compattr 'DockerBuildDate:${BLDDATE}' --compattr 'DockerSha:${DIGEST}' --compattr 'DockerRepo:${IMAGE_REGISTRY}' --compattr 'DockerTag:${IMAGE_TAG}' --compattr 'CustomAction:${COMPONENT_CUSTOMACTION}' --compattr 'ServiceOwner:${COMPONENT_SERVICE_OWNER}' --compattr 'ServiceOwnerEmail:${COMPONENT_SERVICE_OWNER_EMAIL}' --compattr 'ServiceOwnerPhone:${COMPONENT_SERVICE_OWNER_PHONE}'"    
+		sh "/usr/local/bin/dh updatecomp --dhurl '${DHUrl}' --dhuser '${DHUsername}' --dhpass '${DHPassword}' --appname '${AppName}' --appversion '${AppVersion}' --appautoinc 'Y' --compname '${CompName}' --compvariant '${CompVariant}' --compversion '${CompVersionCommit}' --compattr 'GitCommit:${GitCommit}'  --compattr 'GitUrl:${GitUrl}' --compattr 'GitRepo:${GitRepo}' --compattr 'GitBranch:${GitBranch}' --compattr 'BuildId:${env.BUILD_NUMBER}' --compattr 'BuildUrl:${env.BUILD_URL}' --compattr 'Chart:${HelmChart}' --compattr 'ChartVersion:${HelmChartVersion}' --compattr 'ChartNamespace:${HelmNamespace}' --compattr 'ChartRepo:${HelmRepo}' --compattr 'ChartRepoUrl:${HelmRepoUrl}' --compattr 'DockerBuildDate:${BuildDate}' --compattr 'DockerSha:${ImageDigest}' --compattr 'DockerRepo:${ImageRegistry}' --compattr 'DockerTag:${ImageTag}' --compattr 'CustomAction:${CustomAction}' --compattr 'ServiceOwner:${ServiceOwner}' --compattr 'ServiceOwnerEmail:${ServiceOwnerEmail}' --compattr 'ServiceOwnerPhone:${ServiceOwnerPhone}' --compattr 'Readme:${CompReadme}'"    
     }  
 }
 
