@@ -47,28 +47,14 @@ node {
 		def BuildUrl=${env.BUILD_URL}
 		def CompVariant="${GitBranch}"
 		def CompVersionCommit="v${CompVersion}.${env.BUILD_NUMBER}-g${GitCommit}"
-		def CompReadme=eval2var("ls README* 1>/dev/null 2> /dev/null && echo ${GitUrl}#readme")
+		def CompReadme=eval2var('ls README* 1>/dev/null 2> /dev/null && echo "${GitUrl}#readme" || echo ""')
 
 		/*********************************/
 		/* Override Default Tag Name     */
 		/*********************************/
    		ImageTag="${GitBranch}-v${CompVersion}.${env.BUILD_NUMBER}-g${GitCommit}"
 
-		/*********************************/
-		/* Run Docker Build and Push     */
-		/*********************************/
-		sh (returnStdout: true, script: "docker build -f Dockerfile --tag ${ImageRegistry}:${ImageTag} . 2>&1")
-		sh (returnStdout: true, script: "docker push ${ImageRegistry}:${ImageTag} 2>&1")
-
-		/********************************************/
-		/* Derive Disgest (must be done after push) */
-		/********************************************/
-		def ImageDigest=eval2var("docker inspect --format='{{index .RepoDigests 0}}' ${ImageRegistry}:${ImageTag} | tr -d '\\n'").tokenize(':')[1]
-
-		/*********************************************************************/
-		/* Create component version and new application version in DeployHub */
-		/*********************************************************************/
-		sh "/usr/local/bin/dh updatecomp --dhurl '${DHUrl}' --dhuser '${DHUsername}' --dhpass '${DHPassword}' --appname '${AppName}' --appversion '${AppVersion}' --appautoinc 'Y' --compname '${CompName}' --compvariant '${CompVariant}' --compversion '${CompVersionCommit}' --compattr 'GitCommit:${GitCommit}'  --compattr 'GitUrl:${GitUrl}' --compattr 'GitRepo:${GitRepo}' --compattr 'GitBranch:${GitBranch}' --compattr 'BuildId:${BuildId}' --compattr 'BuildUrl:${BuildUrl}' --compattr 'Chart:${HelmChart}' --compattr 'ChartVersion:${HelmChartVersion}' --compattr 'ChartNamespace:${HelmNamespace}' --compattr 'ChartRepo:${HelmRepo}' --compattr 'ChartRepoUrl:${HelmRepoUrl}' --compattr 'DockerBuildDate:${BuildDate}' --compattr 'DockerSha:${ImageDigest}' --compattr 'DockerRepo:${ImageRegistry}' --compattr 'DockerTag:${ImageTag}' --compattr 'CustomAction:${CustomAction}' --compattr 'ServiceOwner:${ServiceOwner}' --compattr 'ServiceOwnerEmail:${ServiceOwnerEmail}' --compattr 'ServiceOwnerPhone:${ServiceOwnerPhone}' --compattr 'Readme:${CompReadme}'"    
+  
     }  
 }
 
