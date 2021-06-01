@@ -37,7 +37,7 @@ node {
 		def GitCommit=eval2var('git log -1 --oneline | cut -f1 -d" "').trim()  // get latest commit on the branch
 		def BuildDate=eval2var('date').trim()
 		def CompVariant="${GitBranch}"
-		def CompVersionCommmit="v${CompVersion}.${env.BUILD_NUMBER}-g${GitCommit}"
+		def CompVersionCommit="v${CompVersion}.${env.BUILD_NUMBER}-g${GitCommit}"
 		def CompReadme=eval2var("ls README* 1>/dev/null 2> /dev/null && echo ${GitUrl}#readme")
 
 		// Override default tag name
