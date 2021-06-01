@@ -7,7 +7,18 @@ node {
     }
     
     stage ('Testing') {
-   
+
+		// Derived values
+		def GIT_BRANCH=env.BRANCH_NAME
+		def GIT_URL=eval2var('git config --get remote.origin.url').trim()       // remote url
+		def GIT_COMMIT=eval2var('git log -1 --oneline | cut -f1 -d" "').trim()  // get latest commit on the branch
+		def BLDDATE=eval2var('date').trim()
+
+		// Update for your image registry and tag
+		def IMAGE_REGISTRY="quay.io/hipsterstore/emailservice"
+   		def IMAGE_TAG="${env.BRANCH_NAME}-v${COMPONENT_VERSION}.${env.BUILD_NUMBER}-g${GIT_COMMIT}"
+		sh (returnStdout: true, script: "docker build -f Dockerfile --tag ${IMAGE_REGISTRY}:${IMAGE_TAG} . 2>&1")
+
 		// Update for your environment
 		def DHURL="https://console.deployhub.com"
 		def DHUSER="stella99"
@@ -15,7 +26,6 @@ node {
 
 		def COMPONENT_NAME="GLOBAL.Chasing Horses LLC.Vintage LLC.Hipster Store.Email Service.emailservice"
 		def COMPONENT_VERSION="1.2.0"
-		def COMPONENT_DOCKERREPO="quay.io/hipsterstore/emailservice"
 		def COMPONENT_SERVICE_OWNER="Steve Taylor"
 		def COMPONENT_SERVICE_OWNER_EMAIL="steve@deployhub.com"
 		def COMPONENT_SERVICE_OWNER_PHONE="505-559-4455"
@@ -31,15 +41,10 @@ node {
 		def APPLICATION_VERSION="1_2_15_0"
 
 		// Derived values
-		def GIT_BRANCH=env.BRANCH_NAME
-		def GIT_URL=eval2var('git config --get remote.origin.url').trim()       // remote url
-		def GIT_COMMIT=eval2var('git log -1 --oneline | cut -f1 -d" "').trim()  // get latest commit on the branch
-		def BLDDATE=eval2var('date').trim()
 
 		def COMPONENT_VARIANT="${GIT_BRANCH}"
 		def COMPONENT_VERSION_COMMIT="v${COMPONENT_VERSION}.${env.BUILD_NUMBER}-g${GIT_COMMIT}"
 
-		def IMAGE_TAG="${env.BRANCH_NAME}-v${COMPONENT_VERSION}.${env.BUILD_NUMBER}-g${GIT_COMMIT}"
 		def DIGEST=eval2var("docker inspect --format='{{index .RepoDigests 0}}' ${COMPONENT_DOCKERREPO}:${IMAGE_TAG}").tokeinize(":")[1]
 
 		// Create component version and new application version in DeployHub
