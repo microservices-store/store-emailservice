@@ -75,9 +75,5 @@ node {
 
 // Function to disable shell echo and grab output from command
 def eval2var(script) {
-    if (isUnix()) {
         return sh(returnStdout: true, script: '#!/bin/sh -e\n' + script);
-    } else {
-        return bat(returnStdout: true, script: '#!/bin/sh -e\n' + script);
-    }
 }	
