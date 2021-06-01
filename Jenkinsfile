@@ -1,12 +1,8 @@
 #!/usr/bin/env groovy
 
 node {
-	
-    stage('Clone sources') {
-        git url: 'https://github.com/ortelius/microservices-demo.git'
-    }
     
-    stage ('Testing') {
+    stage ('Build') {
 
 		// Update for your environment
 		def DHURL="https://console.deployhub.com"
