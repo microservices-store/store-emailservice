@@ -31,7 +31,7 @@ node {
 		def APPLICATION_VERSION="1_2_15_0"
 
 		// Derived values
-		def GIT_BRANCH=env.BRANCH_NAME
+        def GIT_BRANCH=eval2var('git ls-remote --heads origin | grep $(git rev-parse HEAD) | cut -d / -f 3').trim()
 		def GIT_URL=eval2var('git config --get remote.origin.url').trim()       // remote url
 		def GIT_COMMIT=eval2var('git log -1 --oneline | cut -f1 -d" "').trim()  // get latest commit on the branch
 		def BLDDATE=eval2var('date').trim()
@@ -39,7 +39,7 @@ node {
 		def COMPONENT_VERSION_COMMIT="v${COMPONENT_VERSION}.${env.BUILD_NUMBER}-g${GIT_COMMIT}"
 
 		// Override default tag name
-   		IMAGE_TAG="${env.BRANCH_NAME}-v${COMPONENT_VERSION}.${env.BUILD_NUMBER}-g${GIT_COMMIT}"
+   		IMAGE_TAG="${GIT_BRANCH}-v${COMPONENT_VERSION}.${env.BUILD_NUMBER}-g${GIT_COMMIT}"
 
 		// Run Docker Build
 		sh (returnStdout: true, script: "docker build -f Dockerfile --tag ${IMAGE_REGISTRY}:${IMAGE_TAG} . 2>&1")
