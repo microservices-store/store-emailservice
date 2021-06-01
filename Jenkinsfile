@@ -1,16 +1,5 @@
 #!/usr/bin/env groovy
 
-@Library('deployhub') _
-
-def app="ChiliUptimeApp"
-def environment=""
-def cmd=""
-def url="https://console.deployhub.com"
-def user="stella99"
-def pw="1234"
-
-def dh = new deployhub();
-
 node {
 	
     stage('Clone sources') {
@@ -19,49 +8,52 @@ node {
     
     stage ('Testing') {
    
-def comp="GLOBAL.Chasing Horses LLC.Vintage LLC.Hipster Store.Email Service.emailservice"
-def version = "0.1.0"
-def imagename = "emailservice"
+		// Update for your environment
+		def DHURL="https://console.deployhub.com"
+		def DHUSER="stella99"
+		def DHPASS="123456"
 
-echo "${url}";
-echo "${version}";
+		def COMPONENT_NAME="GLOBAL.Chasing Horses LLC.Vintage LLC.Hipster Store.Email Service.emailservice"
+		def COMPONENT_VERSION="1.2.0"
+		def COMPONENT_DOCKERREPO="quay.io/hipsterstore/emailservice"
+		def COMPONENT_SERVICE_OWNER="Steve Taylor"
+		def COMPONENT_SERVICE_OWNER_EMAIL="steve@deployhub.com"
+		def COMPONENT_SERVICE_OWNER_PHONE="505-559-4455"
+		def COMPONENT_CUSTOMACTION="GLOBAL.HelmChart"
 
-// create component version
-// def newComponentVersion(String url, String userid, String pw, String compname, String compvariant, String compversion)
-data = dh.newComponentVersion(url, user, pw, comp, "", version);
-echo "Creation Done " + data.toString();
+		def HELM_CHART="chart/emailservice"
+		def HELM_VERSION="1.0"
+		def HELM_REPO=""
+		def HELM_REPO_URL=""
+		def HELM_NAMESPACE=""
 
-// // update attrs
-def attrs = [
-	     BuildId: env.BUILD_ID,
-	     BuildUrl: env.BUILD_URL,
-             Chart: "harbor-lib/"+imagename, 
-	     chartversion: version,
-	     operator: "Kubernetes operator",
-	     DockerBuildDate: "timestamp",
-	     DockerSha: "sha for the docker image",
-	     DockerRepo: "url for the docker registry",
-	     GitCommit: "git commit",
-	     GitRepo: "git repo",
-	     GitTag: "git tag",
-	     GitUrl: "git url",
-	     buildnumber: env.BUILD_ID, 
-	     buildjob: "GLOBAL.test-project",
-	     ComponentType: "Application File",
-	     ChangeRequestDS: "GLOBAL.JiraUnisys",
-	     Category: "General",
-	     AlwaysDeploy: "N",
-	     DeploySequentially: "N",
-	     BaseDirectory: "tmp",
-	     PreAction: "",
-	     PostAction: "",
-	     CustomAction: "GLOBAL.HelmChart",
-	     Summary: "Pipeline Comp"
-	    ];
-echo "${attrs}";
-// // def updateComponentAttrs(String url, String userid, String pw, String compname, String compvariant, String compversion, Map Attrs)
-data = dh.updateComponentAttrs(url, user, pw, comp, "", version , attrs);
-echo "Update Done " + data.toString();
-	    
+		def APPLICATION_NAME="GLOBAL.Chasing Horses LLC.Vintage LLC..Hipster Store.Dev.Hipster Store;Labor Day Sale"
+		def APPLICATION_VERSION="1_2_15_0"
+
+		// Derived values
+		def GIT_BRANCH=env.BRANCH_NAME
+		def GIT_URL=eval2var('git config --get remote.origin.url').trim()       // remote url
+		def GIT_COMMIT=eval2var('git log -1 --oneline | cut -f1 -d" "').trim()  // get latest commit on the branch
+		def BLDDATE=eval2var('date').trim()
+
+		def COMPONENT_VARIANT="${GIT_BRANCH}"
+		def COMPONENT_VERSION_COMMIT="v${COMPONENT_VERSION}.${env.BUILD_NUMBER}-g${GIT_COMMIT}"
+
+		def IMAGE_TAG="${env.BRANCH_NAME}-v${COMPONENT_VERSION}.${env.BUILD_NUMBER}-g${GIT_COMMIT}"
+		def DIGEST=eval2var("docker inspect --format='{{index .RepoDigests 0}}' ${COMPONENT_DOCKERREPO}:${IMAGE_TAG}").tokeinize(":")[1]
+
+		// Create component version and new application version in DeployHub
+		sh "dh updatecomp --dhurl ${DHURL} --dhuser ${DHUSER} --dhpass ${DHPASS} --appname '${APPLICATION_NAME}' --appversion '${APPLICATION_VERSION}' --compname '${COMPONENT_NAME}' --compvariant '${COMPONENT_VARIANT}' --compversion '${COMPONENT_VERSION_COMMIT}' --compautoinc 'Y' --compattr GitCommit:${GIT_COMMIT}  --compattr GitRepo:${GIT_REPO} --compattr GitUrl:${GIT_URL} --compattr GitBranch:${GIT_BRANCH} --compattr BuildId:${env.BUILD_NUMBER} --compattr BuildUrl:${env.BUILD_URL} --compattr Chart:${HELM_CHART} --compattr ChartVersion:${HELM_VERSION} --compattr ChartNamespace:${HELM_NAMESPACE} --compattr ChartRepo:${HELM_REPO} --compattr ChartRepoUrl:${HELM_REPO_URL} --compattr 'DockerBuildDate:${BLDDATE}' --compattr DockerSha:${DIGEST} --compattr DockerTag:${IMAGE_TAG} --compattr DockerRepo:${COMPONENT_DOCKERREPO} --compattr CustomAction:${COMPONENT_CUSTOMACTION} --compattr 'ServiceOwner:${COMPONENT_SERVICE_OWNER}' --compattr 'ServiceOwnerEmail:${COMPONENT_SERVICE_OWNER_EMAIL}' --compattr 'ServiceOwnerPhone:${COMPONENT_SERVICE_OWNER_PHONE}'"    
+
     }  
 }
+
+
+// Function to disable shell echo and grab output from command
+def eval2var(script) {
+    if (isUnix()) {
+        return sh(returnStdout: true, script: '#!/bin/sh -e\n' + script);
+    } else {
+        return bat(returnStdout: true, script: '#!/bin/sh -e\n' + script);
+    }
+}	
