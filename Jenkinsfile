@@ -8,17 +8,6 @@ node {
     
     stage ('Testing') {
 
-		// Derived values
-		def GIT_BRANCH=env.BRANCH_NAME
-		def GIT_URL=eval2var('git config --get remote.origin.url').trim()       // remote url
-		def GIT_COMMIT=eval2var('git log -1 --oneline | cut -f1 -d" "').trim()  // get latest commit on the branch
-		def BLDDATE=eval2var('date').trim()
-
-		// Update for your image registry and tag
-		def IMAGE_REGISTRY="quay.io/hipsterstore/emailservice"
-   		def IMAGE_TAG="${env.BRANCH_NAME}-v${COMPONENT_VERSION}.${env.BUILD_NUMBER}-g${GIT_COMMIT}"
-		sh (returnStdout: true, script: "docker build -f Dockerfile --tag ${IMAGE_REGISTRY}:${IMAGE_TAG} . 2>&1")
-
 		// Update for your environment
 		def DHURL="https://console.deployhub.com"
 		def DHUSER="stella99"
@@ -30,7 +19,8 @@ node {
 		def COMPONENT_SERVICE_OWNER_EMAIL="steve@deployhub.com"
 		def COMPONENT_SERVICE_OWNER_PHONE="505-559-4455"
 		def COMPONENT_CUSTOMACTION="GLOBAL.HelmChart"
-
+		def IMAGE_REGISTRY="quay.io/hipsterstore/emailservice"
+		def IMAGE_TAG="latest"
 		def HELM_CHART="chart/emailservice"
 		def HELM_VERSION="1.0"
 		def HELM_REPO=""
@@ -41,10 +31,22 @@ node {
 		def APPLICATION_VERSION="1_2_15_0"
 
 		// Derived values
-
+		def GIT_BRANCH=env.BRANCH_NAME
+		def GIT_URL=eval2var('git config --get remote.origin.url').trim()       // remote url
+		def GIT_COMMIT=eval2var('git log -1 --oneline | cut -f1 -d" "').trim()  // get latest commit on the branch
+		def BLDDATE=eval2var('date').trim()
 		def COMPONENT_VARIANT="${GIT_BRANCH}"
 		def COMPONENT_VERSION_COMMIT="v${COMPONENT_VERSION}.${env.BUILD_NUMBER}-g${GIT_COMMIT}"
 
+		// Override default tag name
+   		def IMAGE_TAG="${env.BRANCH_NAME}-v${COMPONENT_VERSION}.${env.BUILD_NUMBER}-g${GIT_COMMIT}"
+
+		// Run Docker Build
+		sh (returnStdout: true, script: "docker build -f Dockerfile --tag ${IMAGE_REGISTRY}:${IMAGE_TAG} . 2>&1")
+
+		// Run Docker Push
+
+		// Derive Disgest (must be done after push)
 		def DIGEST=eval2var("docker inspect --format='{{index .RepoDigests 0}}' ${COMPONENT_DOCKERREPO}:${IMAGE_TAG}").tokeinize(":")[1]
 
 		// Create component version and new application version in DeployHub
