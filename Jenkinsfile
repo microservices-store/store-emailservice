@@ -47,7 +47,7 @@ node {
 		def BuildUrl="${env.BUILD_URL}"
 		def CompVariant="${GitBranch}"
 		def CompVersionCommit="v${CompVersion}.${env.BUILD_NUMBER}-g${GitCommit}"
-		def CompReadme=eval2var('ls README* 1>/dev/null 2> /dev/null && echo https://github.com/${GitRepo}#readme || echo ""').trim()
+		def CompReadme=eval2var('ls README* 1>/dev/null 2> /dev/null && echo https://github.com/' + ${GitRepo} + '#readme || echo ""').trim()
 
 		/*********************************/
 		/* Override Default Tag Name     */
