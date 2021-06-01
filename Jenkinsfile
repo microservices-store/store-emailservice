@@ -1,8 +1,12 @@
 #!/usr/bin/env groovy
 
 node {
+	
+    stage('Clone sources') {
+        git url: 'git@github.com:ortelius/store-emailservice.git'
+    }
     
-    stage ('Build') {
+    stage ('Testing') {
 
 		// Update for your environment
 		def DHURL="https://console.deployhub.com"
