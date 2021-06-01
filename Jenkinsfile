@@ -48,7 +48,7 @@ node {
 		// Run Docker Push
 
 		// Derive Disgest (must be done after push)
-		def DIGEST=eval2var("docker inspect --format='{{index .RepoDigests 0}}' ${IMAGE_REGISTRY}:${IMAGE_TAG}")
+		def DIGEST=eval2var("docker inspect --format='{{index .RepoDigests 0}}' ${IMAGE_REGISTRY}:${IMAGE_TAG}").tokenize(':')[1]
 
 		// Create component version and new application version in DeployHub
 		sh "/usr/local/bin/dh updatecomp --dhurl ${DHURL} --dhuser ${DHUSER} --dhpass ${DHPASS} --appname '${APPLICATION_NAME}' --compname '${COMPONENT_NAME}' --compvariant '${COMPONENT_VARIANT}' --compversion '${COMPONENT_VERSION_COMMIT}' --compautoinc 'Y' --compattr GitCommit:${GIT_COMMIT}  --compattr GitUrl:${GIT_URL} --compattr 'GitRepo:${GIT_REPO}' --compattr 'GitBranch:${GIT_BRANCH}' --compattr BuildId:${env.BUILD_NUMBER} --compattr BuildUrl:${env.BUILD_URL} --compattr Chart:${HELM_CHART} --compattr ChartVersion:${HELM_VERSION} --compattr ChartNamespace:${HELM_NAMESPACE} --compattr ChartRepo:${HELM_REPO} --compattr ChartRepoUrl:${HELM_REPO_URL} --compattr 'DockerBuildDate:${BLDDATE}' --compattr DockerSha:${DIGEST} --compattr DockerRepo:${IMAGE_REGISTRY} --compattr DockerTag:${IMAGE_TAG} --compattr CustomAction:${COMPONENT_CUSTOMACTION} --compattr 'ServiceOwner:${COMPONENT_SERVICE_OWNER}' --compattr 'ServiceOwnerEmail:${COMPONENT_SERVICE_OWNER_EMAIL}' --compattr 'ServiceOwnerPhone:${COMPONENT_SERVICE_OWNER_PHONE}'"    
