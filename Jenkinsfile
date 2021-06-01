@@ -13,7 +13,7 @@ node {
 		def DHUSER="stella99"
 		def DHPASS="123456"
 
-		def COMPONENT_NAME="GLOBAL.Chasing Horses LLC.Vintage LLC.Hipster Store.Email Service.emailservice"
+		def COMPONENT_NAME="GLOBAL.Santa Fe Software.Online Store Company.Store Services.Email Service.emailservice"
 		def COMPONENT_VERSION="1.2.0"
 		def COMPONENT_SERVICE_OWNER="Abraham Ortelius"
 		def COMPONENT_SERVICE_OWNER_EMAIL="request-info@ortelius.io"
@@ -27,7 +27,7 @@ node {
 		def HELM_REPO_URL=""
 		def HELM_NAMESPACE=""
 
-		def APPLICATION_NAME="GLOBAL.Chasing Horses LLC.Vintage LLC..Hipster Store.Dev.Hipster Store;Labor Day Sale;1_2_15_0"
+		def APPLICATION_NAME="GLOBAL.Santa Fe Software.Online Store Company.Candy Store;v1.0.0"
 
 		// Derived values
         def GIT_BRANCH=eval2var('git ls-remote --heads origin | grep $(git rev-parse HEAD) | cut -d / -f 3').trim()
