@@ -39,7 +39,7 @@ node {
 		def COMPONENT_VERSION_COMMIT="v${COMPONENT_VERSION}.${env.BUILD_NUMBER}-g${GIT_COMMIT}"
 
 		// Override default tag name
-   		def IMAGE_TAG="${env.BRANCH_NAME}-v${COMPONENT_VERSION}.${env.BUILD_NUMBER}-g${GIT_COMMIT}"
+   		IMAGE_TAG="${env.BRANCH_NAME}-v${COMPONENT_VERSION}.${env.BUILD_NUMBER}-g${GIT_COMMIT}"
 
 		// Run Docker Build
 		sh (returnStdout: true, script: "docker build -f Dockerfile --tag ${IMAGE_REGISTRY}:${IMAGE_TAG} . 2>&1")
