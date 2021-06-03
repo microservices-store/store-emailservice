@@ -6,13 +6,13 @@ node {
         git url: 'git@github.com:ortelius/store-emailservice.git'
     }
     
-    stage ('Testing') {
+    stage ('Build') {
 		/*********************************/
 		/*   Update for your component   */
 		/*********************************/
 		def DHUrl="https://console.deployhub.com"
 		def DHUsername="stella99"
-		def DHPassword="123456"
+		def DHPassword="XXXXX"
 
 		def AppName="GLOBAL.Santa Fe Software.Online Store Company.Candy Store"
 		def AppVersion="v1.0.0"
@@ -38,7 +38,7 @@ node {
 		/*********************************/
 		/*        Derived Values         */
 		/*********************************/
-        def GitBranch=eval2var('git ls-remote --heads origin | grep $(git rev-parse HEAD) | cut -d / -f 3').trim()
+		def GitBranch=eval2var('git ls-remote --heads origin | grep $(git rev-parse HEAD) | cut -d / -f 3').trim()
 		def GitUrl=eval2var('git config --get remote.origin.url').trim()       // remote url
 		def GitRepo=eval2var('git config --local remote.origin.url | sed "s/[:\\/]/\\n/g" | tail -2 | tr "\\n" "/" | sed "s/\\.git\\///"').trim()
 		def GitCommit=eval2var('git log -1 --oneline | cut -f1 -d" "').trim()  // get latest commit on the branch
@@ -68,8 +68,40 @@ node {
 		/*********************************************************************/
 		/* Create component version and new application version in DeployHub */
 		/*********************************************************************/
-		sh "/usr/local/bin/dh updatecomp --dhurl '${DHUrl}' --dhuser '${DHUsername}' --dhpass '${DHPassword}' --appname '${AppName}' --appversion '${AppVersion}' --appautoinc 'Y' --compname '${CompName}' --compvariant '${CompVariant}' --compversion '${CompVersionCommit}' --compattr 'GitCommit:${GitCommit}'  --compattr 'GitUrl:${GitUrl}' --compattr 'GitRepo:${GitRepo}' --compattr 'GitBranch:${GitBranch}' --compattr 'BuildId:${BuildId}' --compattr 'BuildUrl:${BuildUrl}' --compattr 'Chart:${HelmChart}' --compattr 'ChartVersion:${HelmChartVersion}' --compattr 'ChartNamespace:${HelmNamespace}' --compattr 'ChartRepo:${HelmRepo}' --compattr 'ChartRepoUrl:${HelmRepoUrl}' --compattr 'DockerBuildDate:${BuildDate}' --compattr 'DockerSha:${ImageDigest}' --compattr 'DockerRepo:${ImageRegistry}' --compattr 'DockerTag:${ImageTag}' --compattr 'CustomAction:${CustomAction}' --compattr 'ServiceOwner:${ServiceOwner}' --compattr 'ServiceOwnerEmail:${ServiceOwnerEmail}' --compattr 'ServiceOwnerPhone:${ServiceOwnerPhone}' --compattr 'Readme:${CompReadme}'"    
-    }  
+		sh """
+		   /usr/local/bin/dh \
+		   updatecomp \
+		   --dhurl '${DHUrl}' \
+		   --dhuser '${DHUsername}' \
+		   --dhpass '${DHPassword}' \
+		   --appname '${AppName}' \
+		   --appversion '${AppVersion}' \
+		   --appautoinc 'Y' \
+		   --compname '${CompName}' \
+		   --compvariant '${CompVariant}' \
+		   --compversion '${CompVersionCommit}' \
+	       --compattr 'GitCommit:${GitCommit}'  \
+		   --compattr 'GitUrl:${GitUrl}' \
+		   --compattr 'GitRepo:${GitRepo}' \
+		   --compattr 'GitBranch:${GitBranch}' \
+		   --compattr 'BuildId:${BuildId}' \
+		   --compattr 'BuildUrl:${BuildUrl}' \
+		   --compattr 'Chart:${HelmChart}' \
+		   --compattr 'ChartVersion:${HelmChartVersion}' \
+		   --compattr 'ChartNamespace:${HelmNamespace}' \
+		   --compattr 'ChartRepo:${HelmRepo}' \
+		   --compattr 'ChartRepoUrl:${HelmRepoUrl}' \
+		   --compattr 'DockerBuildDate:${BuildDate}' \
+		   --compattr 'DockerSha:${ImageDigest}' \
+		   --compattr 'DockerRepo:${ImageRegistry}' \
+		   --compattr 'DockerTag:${ImageTag}' \
+		   --compattr 'CustomAction:${CustomAction}' \
+		   --compattr 'ServiceOwner:${ServiceOwner}' \
+		   --compattr 'ServiceOwnerEmail:${ServiceOwnerEmail}' \
+		   --compattr 'ServiceOwnerPhone:${ServiceOwnerPhone}' \
+		   --compattr 'Readme:${CompReadme}'
+		"""    
+	}  
 }
 
 
