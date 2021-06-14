@@ -102,7 +102,7 @@ node {
 		
 		sh """
 		   /usr/local/bin/dh \
-		   updatecomp \
+		   deploy \
 		   --dhurl '${DHUrl}' \
 		   --dhuser '${DHUsername}' \
 		   --dhpass '${DHPassword}' \
