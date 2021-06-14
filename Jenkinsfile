@@ -12,7 +12,7 @@ node {
 		/*********************************/
 		def DHUrl="https://console.deployhub.com"
 		def DHUsername="stella99"
-		def DHPassword="XXXXX"
+		def DHPassword="123456"
 
 		def AppName="GLOBAL.Santa Fe Software.Online Store Company.Candy Store"
 		def AppVersion="v1.0.0"
@@ -74,10 +74,8 @@ node {
 		   --dhurl '${DHUrl}' \
 		   --dhuser '${DHUsername}' \
 		   --dhpass '${DHPassword}' \
-		   --appname '${AppName}' \
-		   --appversion '${AppVersion}' \
-		   --appautoinc 'Y' \
 		   --compname '${CompName}' \
+		   --deploydatasave 'compdata.json' \
 		   --compvariant '${CompVariant}' \
 		   --compversion '${CompVersionCommit}' \
 	       --compattr 'GitCommit:${GitCommit}'  \
@@ -101,6 +99,19 @@ node {
 		   --compattr 'ServiceOwnerPhone:${ServiceOwnerPhone}' \
 		   --compattr 'Readme:${CompReadme}'
 		"""    
+		
+		sh """
+		   /usr/local/bin/dh \
+		   updatecomp \
+		   --dhurl '${DHUrl}' \
+		   --dhuser '${DHUsername}' \
+		   --dhpass '${DHPassword}' \
+		   --appname '${AppName}' \
+		   --appversion '${AppVersion}' \
+		   --appautoinc 'Y' \
+		   --deploydata 'compdata.json' \
+		   --deployenv 'GLOBAL.Santa Fe Software.Online Store Company.AWS'
+		"""   
 	}  
 }
 
