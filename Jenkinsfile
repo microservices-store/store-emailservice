@@ -99,19 +99,7 @@ node {
 		   --compattr 'ServiceOwnerPhone:${ServiceOwnerPhone}' \
 		   --compattr 'Readme:${CompReadme}'
 		"""    
-		
-		sh """
-		   /usr/local/bin/dh \
-		   deploy \
-		   --dhurl '${DHUrl}' \
-		   --dhuser '${DHUsername}' \
-		   --dhpass '${DHPassword}' \
-		   --appname '${AppName}' \
-		   --appversion '${AppVersion}' \
-		   --appautoinc 'Y' \
-		   --deploydata 'compdata.json' \
-		   --deployenv 'GLOBAL.Santa Fe Software.Online Store Company.AWS'
-		"""   
+
 	}  
 }
 
