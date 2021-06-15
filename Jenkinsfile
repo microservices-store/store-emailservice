@@ -75,7 +75,7 @@ node {
 		   --dhuser '${DHUsername}' \
 		   --dhpass '${DHPassword}' \
 		   --compname '${CompName}' \
-		   --deploydatasave 'compdata.json' \
+		   --deploydatasave '/tmp/compdata.json' \
 		   --compvariant '${CompVariant}' \
 		   --compversion '${CompVersionCommit}' \
 	       --compattr 'GitCommit:${GitCommit}'  \
