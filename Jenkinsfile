@@ -16,6 +16,7 @@ node {
 
 		def AppName="GLOBAL.Santa Fe Software.Online Store Company.Candy Store"
 		def AppVersion="v1.0.0"
+		def DeployEnv="GLOBAL.Santa Fe Software.Online Store Company.AWS"
 
 		def CompName="GLOBAL.Santa Fe Software.Online Store Company.Store Services.Email Service.emailservice"
 		def CompVersion="1.2.0"
@@ -100,6 +101,17 @@ node {
 		   --compattr 'Readme:${CompReadme}'
 		"""    
 
+		sh """
+		   /usr/local/bin/dh \
+		   deploy \
+		   --dhurl '${DHUrl}' \
+		   --dhuser '${DHUsername}' \
+		   --dhpass '${DHPassword}' \
+		   --appname '${AppName}' \
+		   --appversion '${AppVersion}' \
+		   --deployenv '${DeployEnv}' \
+		   --deploydata '/tmp/compdata.json' 
+		"""   
 	}  
 }
 
