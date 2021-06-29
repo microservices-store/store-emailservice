@@ -10,7 +10,7 @@ node {
 		/*********************************/
 		/*   Update for your component   */
 		/*********************************/
-		def DHUrl="http://192.168.10.120:8181"
+		def DHUrl="https://console.deployhub.com"
 		def DHUsername="stella99"
 		def DHPassword="123456"
 
