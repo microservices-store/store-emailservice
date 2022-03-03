@@ -1,9 +1,0 @@
-[Component]
-    Components = [
-         { Name = "GLOBAL.SF Tech.Online Store Company.Purchase Processing.Currency Service.emailservice", Application = "GLOBAL.SF Tech.Online Store Company.Hipster Store.Dev.Hipster Store;Labor Day Sale;1_2_10_2"}
-    ]    
-    Version = "1.2.2"
-    ChartName = "chart/emailservice"
-    DockerRepo = "quay.io/hipsterstore/emailservice"
-    GitUrl = "https://github.com/ortelius/store-emailservice"
-    CustomAction = "GLOBAL.HelmChart"
