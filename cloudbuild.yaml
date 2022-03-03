@@ -1,47 +1,85 @@
-steps:
-  # Get Env Vars from dhvars.toml and create cloudbuild.sh
-  - name: 'quay.io/deployhub/compupdate'
-    args: ['envscript', '--envvars', 'cloudbuild.toml']
-  # Use commit count in IMAGE_TAG
-  - name: gcr.io/cloud-builders/docker
-    entrypoint: 'bash'
-    args: ['-c', '. /workspace/cloudbuild.sh;git clone $$COMPONENT_GITURL /tmp/git;cd /tmp/git;echo export IMAGE_TAG=\"$BRANCH_NAME-v$$COMPONENT_VERSION.$(git rev-list --count $BRANCH_NAME)-g$SHORT_SHA\" >> /workspace/cloudbuild.sh;cat /workspace/cloudbuild.sh']
+# Copyright (c) 2021 Linux Foundation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
-  # Build the image and save details as part of the LABEL
-  - name: 'gcr.io/cloud-builders/docker'
+options:
+  env:
+    - "BRANCH_NAME=${BRANCH_NAME}"
+    - "BUILD_ID=${BUILD_ID}"
+    - "DHURL=https://console.deployhub.com"
+    - "DOCKER_CONFIG=/workspace/docker-config"
+    - "PROJECT_ID=${PROJECT_ID}"
+    - "SHORT_SHA=${SHORT_SHA}"
+    - "TAG_NAME=${TAG_NAME}"
+steps:
+  # Setup environment including img tag name for nginx
+  - name: python
+    id: gitvars
+    secretEnv: ['DHUSER', 'DHPASS']
     entrypoint: 'bash'
-    args: ["-c", '. /workspace/cloudbuild.sh;docker build --tag "$$COMPONENT_DOCKERREPO:$$IMAGE_TAG" --build-arg "BLDDATE=$$BLDDATE" --build-arg "REPO_NAME=$REPO_NAME" --build-arg "COMMIT_SHA=$COMMIT_SHA" --build-arg "SHORT_SHA=$SHORT_SHA" --build-arg "PROJECT_ID=$PROJECT_ID" --build-arg "BUILD_ID=$BUILD_ID" --build-arg "BRANCH_NAME=$BRANCH_NAME" --build-arg "TAG_NAME=$TAG_NAME" --build-arg "REVISION_ID=$REVISION_ID" .']
-    
+    args:
+      - '-c'
+      - |
+        pip3 install deployhub | grep -i deployhub; \
+        dh envscript --envvars /workspace/component.toml --envvars_sh /workspace/cloudbuild.sh; \
+        source /workspace/cloudbuild.sh; \
+        env | sort;
+        
+
   # Login to Quay for push.
-  # PASSWORD is decrypted before this step runs.
-  # Note: You need a shell to resolve environment variables with $$
   - name: 'gcr.io/cloud-builders/docker'
+    id: login
+    secretEnv: ['QUAY_USERID', 'QUAY_PASSWORD']  
     entrypoint: 'bash'
-    env:
-      - 'DOCKER_CONFIG=/workspace/docker-config'
-    args: ['-c', '. /workspace/cloudbuild.sh;docker login quay.io --username "$$QUAY_USERID" --password $$QUAY_PASSWORD']
-    secretEnv: ['QUAY_USERID', 'QUAY_PASSWORD']
-  
-  # Push the image to Quay.
+    args: 
+      - '-c'
+      - | 
+        source /workspace/cloudbuild.sh; \
+        docker login quay.io --username "$$QUAY_USERID" --password $$QUAY_PASSWORD  
+
+  # Build and push quay.io/ortelius/ms-textfile-crud
   - name: 'gcr.io/cloud-builders/docker'
+    id: build_push
     entrypoint: 'bash'
-    env:
-      - 'DOCKER_CONFIG=/workspace/docker-config'
-    args: ['-c', ". /workspace/cloudbuild.sh;docker push $$COMPONENT_DOCKERREPO:$$IMAGE_TAG"]
+    args: 
+      - '-c'
+      - |
+        source /workspace/cloudbuild.sh; \
+        docker build --tag $$COMPONENT_DOCKERREPO:$$IMAGE_TAG -f /workspace/Dockerfile .; \
+        docker push $$COMPONENT_DOCKERREPO:$$IMAGE_TAG
 
   # Get image id
   - name: 'gcr.io/cloud-builders/docker'
+    id: digest
     entrypoint: 'bash'
-    env:
-      - 'DOCKER_CONFIG=/workspace/docker-config'
-    args: ['-c', ". /workspace/cloudbuild.sh;echo export DIGEST=$(docker inspect --format='{{index .RepoDigests 0}}' $$COMPONENT_DOCKERREPO:$$IMAGE_TAG) >> cloudbuild.sh" ]
+    args: 
+      - '-c'
+      - |
+        source /workspace/cloudbuild.sh; \
+        echo export DIGEST=$(docker inspect --format='{{index .RepoDigests 0}}' $$COMPONENT_DOCKERREPO:$$IMAGE_TAG | cut -d: -f2 | cut -c-12) >> /workspace/cloudbuild.sh
 
   # Capture new component version in DeployHub
-  - name: 'quay.io/deployhub/compupdate'
-    entrypoint: 'bash'
+  - name: python
+    id: compupdate
     secretEnv: ['DHUSER', 'DHPASS']
-    args: ['-c', '. /workspace/cloudbuild.sh;dh updatecomp --dhurl https://console.deployhub.com --appname "$$COMPONENT_APPLICATION" --compname "$$COMPONENT_NAME" --compversion $$IMAGE_TAG --docker --compattr "GitCommit:$SHORT_SHA" --compattr "GitUrl:$$COMPONENT_GITURL" --compattr "GitRepo:$REPO_NAME" --compattr "GitTag:$TAG_NAME" --compattr "GitBranch:$BRANCH_NAME" --compattr "Chart:$$COMPONENT_CHARTNAME" --compattr "DockerSha:$$DIGEST" --compattr "DockerBuildDate:$$BLDDATE" --compattr "DockerRepo:$$COMPONENT_DOCKERREPO" --compattr "BuildId:$BUILD_ID" --compattr "BuildUrl:https://console.cloud.google.com/cloud-build/builds/$BUILD_ID?project=$PROJECT_ID" --compattr "CustomAction:$$COMPONENT_CUSTOMACTION" --compattr "DockerTag:$$IMAGE_TAG"']
- 
+    entrypoint: 'bash'
+    args: 
+      - '-c'
+      - |
+        pip install deployhub | grep -i deployhub; \
+        source /workspace/cloudbuild.sh; \
+        dh updatecomp --rsp /workspace/component.toml  
+
 secrets:
 - kmsKeyName: projects/eighth-physics-169321/locations/global/keyRings/cli/cryptoKeys/quay
   secretEnv:
@@ -49,10 +87,9 @@ secrets:
 - kmsKeyName: projects/eighth-physics-169321/locations/global/keyRings/cli/cryptoKeys/quay-pw
   secretEnv:
     QUAY_PASSWORD: CiQAUULEud9Ej8XtwNAb9gkbDVhSGFZYhUGE30fNwR+7ehAOkH8SMgCz6KYeykjgS16RPxgKlrIQL/1TKDt06v4OXGIisFXOkdWC+jvdda8mTzVNCi8sT5g6 
-- kmsKeyName: projects/eighth-physics-169321/locations/global/keyRings/cli/cryptoKeys/deployhub-id
+- kmsKeyName: projects/eighth-physics-169321/locations/global/keyRings/cli/cryptoKeys/ortelius-id
   secretEnv:
-    DHUSER: CiQAWaYEUxvyFOXQ9sTfQV7oQVnYbo8dnBtBBGu68nZ5t5PwyfASMQC/Ky27lzG8D0+MSmMiAOJyAcyV+wJqbPeb0EiDpMFmRQLfUiO16v6IzAyImyMOA2U=
-- kmsKeyName: projects/eighth-physics-169321/locations/global/keyRings/cli/cryptoKeys/deployhub-pw
+    DHUSER: CiQAGgJuQPSnKQp3ORI4qwqJO9FtelelLISVTghBDc35ayDWIycSMQC43iio9bEN5d20trUaMaJM450twRwzTeBGwBMxWAF+aN/n7ZuYN6fJRd+eAuCXfQg=
+- kmsKeyName: projects/eighth-physics-169321/locations/global/keyRings/cli/cryptoKeys/ortelius-pw
   secretEnv:
-    DHPASS: CiQAJVcuyaWuQT/AqWDpmiC8Ncev/wtGYcLMrGLsBqeGac7Ssa0SLwBByiFzFczptdw9H/By8UYGABrmrhidRwNh0P65xRVc7U0zhKIKhlFiPMYNqo9z 
-  
+    DHPASS: CiQAZySXz8Q7gIFx7HwjyN6XSxTLSY8Cox5QDU090ny+Bd2KDYUSLwB98+y3bxvNRjeB+mtRzMuaObIImup/vDgLKieuXwingEDCwriZhmboQ/1prq11

@@ -1,9 +1,36 @@
-[Component]
-    Components = [
-         { Name = "GLOBAL.SF Tech.Online Store Company.Purchase Processing.Currency Service.emailservice", Application = "GLOBAL.SF Tech.Online Store Company.Hipster Store.Dev.Hipster Store;Labor Day Sale;1_2_10_2"}
-    ]    
-    Version = "1.2.2"
-    ChartName = "chart/emailservice"
-    DockerRepo = "quay.io/hipsterstore/emailservice"
-    GitUrl = "https://github.com/ortelius/store-emailservice"
-    CustomAction = "GLOBAL.HelmChart"
+Application = "GLOBAL.Santa Fe Software.Online Store Company.Hipster Store;July 4th Sale"
+Application_Version = "1.2.9.1"
+# DeployEnv = "GLOBAL.ortelius.saas.aks-cluster"
+
+Name = "GLOBAL.Santa Fe Software.Online Store Company.Store Services.Email Service.emailservice"
+Variant = "${BRANCH_NAME}"
+Version = "v1.2.2.${BUILDNUM}-g${SHORT_SHA}"
+
+[Export]
+     IMAGE_TAG = "${Variant}-${Version}"
+     COMPONENT_DOCKERREPO="${DockerRepo}"
+
+[Attributes]
+     BuildId = "${BUILD_ID}"
+     BuildUrl = "https://console.cloud.google.com/cloud-build/builds/${BUILD_ID}?project=${PROJECT_ID}"
+     Chart = "chart/emailservice"
+     ChartNameSpace = "stores"
+     CustomAction = "GLOBAL.HelmChart"
+     DockerBuildDate = "${BLDDATE}"
+     DockerRepo = "quay.io/hipsterstore/emailservice"
+     DockerSha = "${DIGEST}"
+     DockerTag = "${IMAGE_TAG}"
+     GitBranch = "${BRANCH_NAME}"
+     GitCommit = "${SHORT_SHA}"
+     GitRepo = "${GIT_REPO}"
+     GitTag = "${TAG_NAME}"
+     GitUrl = "${GIT_URL}"
+     GitCommitTimestamp = "${GIT_COMMIT_TIMESTAMP}"
+     GitLinesAdded = "${GIT_LINES_ADDED}"
+     GitLinesDeleted = "${GIT_LINES_DELETED}"
+     ServiceOwner = "GLOBAL.Santa Fe Software.ETaylor"
+     SlackChannel = "https://openssf.slack.com/archives/C0302CVKPA5"
+     DiscordChannel = "https://discord.gg/Iv5d4"
+     HipChatChannel = "no channel available"
+     PagerDutyUrl = "https://pagerduty.com/myorg/myservice"
+     PagerDutyBusinessUrl = "https://pagerduty.com/myorg/mybusiness"
